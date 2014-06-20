@@ -14,6 +14,8 @@ _sections = {
 		("Bellman-Ford", 'cpp', "BellmanFord.cc"),
 		("Floyd-Warshall", 'cpp', "FloydWarshall.cc"),
 		("Maximum Flow (Dinic)", 'cpp', "MaximumFlowDinic.cc"),
+		("Maximum Flow (Push-relabel)", 'cpp', "MaximumFlow_PushRelabel.cc"),
+		("Minimum-cost Maximum Flow", 'cpp', "MinCostMaxFlow.cc"),
 		("Strongly-connected Components", 'cpp', "SCC.cc"),
 	],
 	"Maths": [
@@ -22,20 +24,21 @@ _sections = {
 		("Simplex", 'cpp', "Simplex.cc"),
 	],
 	"Geometry": [
+		("Basic floating point comparison", 'cpp', "FloatCompare.cc"),
 		("Basic Vector/Point", 'cpp', "Vector.cc"),
 		("Plane Geometry", 'cpp', "PlaneGeometry.cc"),
 		("Polygon", 'cpp', "Polygon.cc"),
 	],
 	"Strings": [
 		("Knuth-Morris-Pratt Table/Algorithm", 'cpp', "KMP.cc"),
-		("Suffix Arrays", 'cpp', "SuffixArray.cc"),
+		("Suffix Array/LCP", 'cpp', "SuffixArray.cc"),
 	]
 }
 
 _fmtnames = {'cpp' : 'C++', 'java' : 'Java'}
 
 _re_START  = re.compile('\s*//\s*BEGIN\s*$')
-_re_END	= re.compile('\s*//\s*END\s*$')
+_re_END    = re.compile('\s*//\s*END\s*$')
 
 def preprocess(fn):
 	out = ""
@@ -57,6 +60,8 @@ def make_html(fn, fmt):
 	html_page = subprocess.Popen(
 		('enscript',
 			'-E{fmt}'.format(fmt=fmt),
+			'-2', # number of columns
+			'--tabsize=2',
 			'--language=html',
 			'-o-',
 			'--color'),
@@ -73,7 +78,14 @@ def make_notebook(sections):
 <STYLE>
 h2 { font-size: 12pt }
 ol { font-size: 10pt }
-pre { font-size: 11pt }
+pre {
+    font-size: 11pt;
+    -moz-tab-size:    2;
+    -o-tab-size:      2;
+    -webkit-tab-size: 2;
+    -ms-tab-size:     2;
+    tab-size:         2;
+}
 </STYLE>
 <TITLE>UW-Madison ACM-ICPC Reference 2014</TITLE>
 </HEAD>
@@ -107,6 +119,6 @@ pre { font-size: 11pt }
 	print( '</BODY></HTML>' )
 
 
-if __name__ == "__main__":			
+if __name__ == "__main__":
 	make_notebook(_sections)
 

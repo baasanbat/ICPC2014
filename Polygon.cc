@@ -9,6 +9,7 @@
 // Basic routines for polygon-related stuff.
 // Uses Vector.cc and PlaneGeometry.cc.
 // Polygons are just vector<Pt>'s.
+#define FOR(v,l,u) for( size_t v = l; v < u; ++v )
 typedef vector<Pt> VP;
 
 T ComputeSignedArea( const VP &p ) {
@@ -55,21 +56,20 @@ bool IsSimple( const VP &p ) {
 // If q is *on* the polygon, then the results are not well-defined,
 // since it depends on whether q is on an "up" or "down" edge.
 size_t WindingNumber( const VP &p, Pt q) {
-	int ret = 0;
-	for( size_t i = 0; i < p.size(); i++ ) {
+	int wn = 0;   vector<int> state(p.size()); // state decides up/down
+	FOR(i,0,p.size())
+		if( ApproxEq(p[i].y, q.y) )  state[i] =  0; // break ties later
+		else if( p[i].y < q.y )      state[i] = -1; // we'll use nearest
+		else                         state[i] =  1; // neighbor (either)
+	FOR(i,1,p.size())   if( state[i] == 0 ) state[i] = state[i-1];
+	FOR(i,0,p.size()-1) if( state[i] == 0 ) state[i] = state[i+1];
+	FOR(i,0,p.size()) {
 		size_t z = (i + 1) % p.size();
-		if( p[i].y <= q.y ) {                 // must go up to pass q
-			if( p[z].y > q.y )                  // passing
-				if( isLeft( p[i], p[z], q ) > 0 ) // q is to the left of edge
-					++ret;
-		}
-		else {                                // must go down to pass q
-			if( p[z].y < q.y )                  // passing
-				if( isLeft( p[z], p[i], q ) > 0 ) // q is to the left of edge
-					--ret;
-		}
+		if( state[z] == state[i] ) continue; // only interested in changes
+		else if( state[z] == 1 && isLeft(p[i],p[z],q) > 0 ) ++wn;
+		else if( state[i] == 1 && isLeft(p[i],p[z],q) < 0 ) --wn;
 	}
-	return (size_t)(ret < 0 ? -ret : ret);
+	return (size_t)(wn < 0 ? -wn : wn);
 }
 // A complement to the above.
 bool PointOnPolygon( const VP &p, Pt q ) {
@@ -83,8 +83,8 @@ bool PointOnPolygon( const VP &p, Pt q ) {
 // Convex hull.
 // This *will* modify the given VP. To save your points, do
 // {   VP hull(p.begin(),p.end());    ConvexHull(hull);   }
-// REMOVE_REDUNDANT does what it sounds like it does.
-#define REMOVE_REDUNDANT
+// This *will* keep redundant points on the polygon border.
+// To ignore those, change the isLeft's < and > to <= and >=.
 void ConvexHull( VP &Z ) {
 	sort( Z.begin(), Z.end(), lex_cmp_xy);
 	Z.resize( unique(Z.begin(),Z.end()) - Z.begin() );
@@ -99,22 +99,6 @@ void ConvexHull( VP &Z ) {
 	}
 	Z = dn;
 	for( size_t i = up.size() - 2; i >= 1; i-- ) Z.push_back(up[i]);
-#ifdef REMOVE_REDUNDANT
-	if( Z.size() <= 2 ) return;
-	dn.clear();
-	dn.push_back( Z[0] );
-	dn.push_back( Z[1] );
-	for( size_t i = 2; i < Z.size(); i++ ) {
-		if( PointOnSegment(dn[dn.size()-2],Z[i],dn.back()) )
-			dn.pop_back();
-		dn.push_back(Z[i]);
-	}
-	if( dn.size() >= 3 && PointOnSegment(dn.back(),dn[1],dn[0]) ) {
-		dn[0] = dn.back();
-		dn.pop_back();
-	}
-	Z = dn;
-#endif
 }
 // END
 // Poly-poly intersection?
